@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Thourny</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script>
+	  // Initialize Firebase
+	  var config = {
+	    apiKey: "AIzaSyBJpgMBvbHBR2MenXr3U5buJh-oTCVc4HU",
+	    authDomain: "thourny-85a69.firebaseapp.com",
+	    databaseURL: "https://thourny-85a69.firebaseio.com",
+	    projectId: "thourny-85a69",
+	    storageBucket: "",
+	    messagingSenderId: "1076714087397"
+	  };
+	  firebase.initializeApp(config);
+	</script>
+	<script>
+		const database = firebase.database();
+		var randbase = Math.random();
+		var increment = 1;
+
+		$( document ).ready(function() {
+			database.ref('Players/').on('value', function(snapshot) {
+				display(snapshot);
+			});
+			$('.matcher').on('click','.deltagare', function(e){
+				increment = parseInt($('.increment').val());
+				update(e.target);
+			});
+			$('.title').on('click', function(e){
+				location.reload();
+			});
+		});
+
+		function shuffleArray(array,randomizer) {
+		    for (var i = array.length - 1; i > 0; i--) {
+		        var j = Math.floor(randomizer * (i + 1));
+		        var temp = array[i];
+		        array[i] = array[j];
+		        array[j] = temp;
+		    }
+		}
+		
+		function display(content){
+			$('.matcher').html('');
+			var matches = [];
+			var m = 0;
+			var p = 1;
+
+			var contentObj = content.val(); 
+
+			var keys = Object.keys(contentObj);
+			var len = keys.length;
+
+			shuffleArray(keys,randbase)
+			
+			for (var i = 0; i < len; i++) {
+				k = keys[i];
+				// console.log(contentObj[k]);
+				var player = '<span class="deltagare" id="' + k + '" data-wins="' + contentObj[k].wins + '">' + contentObj[k].name +' [' + contentObj[k].wins + ']</span>';
+				if (p == 2) {
+					matches[m] = matches[m] + player + '</li>';
+					m++;
+					p = 1;
+				}
+				else if(p == 1){
+					matches[m] = '<li id="match-' + m + '" class="match">' + player + ' vs ';
+					p++
+				} 
+			}
+
+			// console.log(matches);
+
+			// $.each(contentObj, function(key, value){
+
+			// 	var player = '<span class="deltagare" id="' + key + '" data-wins="' + value.wins + '">' + value.name +' [' + value.wins + ']</span>';
+			// 	if (p == 2) {
+			// 		matches[m] = matches[m] + player + '</li>';
+			// 		m = m * randmulti;
+			// 		p = 1;
+			// 	}
+			// 	else if(p == 1){
+			// 		matches[m] = '<li id="match-' + m + '" class="match">' + player + ' vs ';
+			// 		p++
+			// 	} 
+			// });
+
+			$.each(matches, function(key, value){
+				// console.log(key);
+				$('.matcher').append(value);
+			});
+			// console.log(matches);
+			$('.matcher').html()
+		}
+		function update(target){
+			database.ref('Players/' + $(target).attr('id')).update({ 
+				"wins" : $(target).data('wins') + increment
+			});
+		}
+		
+	</script>
+</head>
+<body>
+	<h1 class="title">Thourny</h1>
+	<input type="number" class="increment" value="1">
+	<ul class="matcher">
+		<!-- <li class="match"><span class="deltagare" id="21" data-wins="3">Namn</span> VS <span class="deltagare" id="31" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="22" data-wins="3">Namn</span> VS <span class="deltagare" id="32" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="23" data-wins="3">Namn</span> VS <span class="deltagare" id="33" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="24" data-wins="3">Namn</span> VS <span class="deltagare" id="34" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="25" data-wins="3">Namn</span> VS <span class="deltagare" id="35" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="26" data-wins="3">Namn</span> VS <span class="deltagare" id="36" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="27" data-wins="3">Namn</span> VS <span class="deltagare" id="37" data-wins="3">Namn</span></li>
+		<li class="match"><span class="deltagare" id="28" data-wins="3">Namn</span> VS <span class="deltagare" id="38" data-wins="3">Namn</span></li> -->
+	</ul>
+</body>
+</html>
