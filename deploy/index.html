@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta charset="UTF-8">
 	<title>Thourny</title>
 	<link rel="stylesheet" href="style.css">
@@ -46,6 +47,29 @@
 				display(list);
 			});
 			$('.settings').on('input','.user',function (){
+				if(ip){
+					var target = 'Players/' + ip;
+					var input = $(this).val();
+					database.ref(target).once('value').then(function(snapshot) {
+						var wins = 0
+						if(snapshot.val()){
+							if(snapshot.val()['wins']){
+								wins = snapshot.val()['wins'];
+							}
+							database.ref(target).update({ 
+								"name" : input,
+								"wins" : wins
+							});
+						} else {
+							database.ref(target).update({ 
+								"name" : input,
+								"wins" : wins
+							});
+						}
+						
+						
+					});
+				} 
 				if($(this).val() == 'nays'){
 					localStorage['thourneyAdmin'] = 'true';
 					setupSetting();
@@ -53,17 +77,6 @@
 				else if($(this).val() == 'logg off'){
 					localStorage['thourneyAdmin'] = 'false';
 					setupSetting();
-				} else if(ip){
-					var target = 'Players/' + ip;
-					var input = $(this).val();
-					database.ref(target).once('value').then(function(snapshot) {
-						console.log(snapshot.val().wins);
-						database.ref(target).update({ 
-							"name" : input,
-							"wins" : snapshot.val().wins
-						});
-					});
-					
 				}
 			})
 			setupSetting();
