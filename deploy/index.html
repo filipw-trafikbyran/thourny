@@ -93,10 +93,18 @@
 
 		function banmode(){
 			$('.banmode').addClass('active');
+			$('.increment').val(0);
 			$('.matcher').on('click','.deltagare', function(e){
-				database.ref('Players/' + $(e.target).attr('id')).update({ 
-					"banned" : true
-				});
+				if(!$(e.target).hasClass('banned')){
+					database.ref('Players/' + $(e.target).attr('id')).update({ 
+						"banned" : true
+					});
+				} else {
+					database.ref('Players/' + $(e.target).attr('id')).update({ 
+						"banned" : false
+					});
+				}
+				
 			});
 		}
 
@@ -123,11 +131,16 @@
 			
 			for (var i = 0; i < len; i++) {
 				k = keys[i];
-				if(content[k]['banned']){
-					
+				if(content[k]['banned'] &! $('.banmode').hasClass('active')){
+
 				}else {
 					// console.log(content[k]);
-					var player = '<span class="deltagare" id="' + k + '" data-wins="' + content[k].wins + '">' + content[k].name +' [' + content[k].wins + ']</span>';
+					if(!content[k]['banned']){
+						var clases = 'deltagare';
+					} else {
+						var clases = 'deltagare banned';
+					}
+					var player = '<span class="' + clases + '" id="' + k + '" data-wins="' + content[k].wins + '">' + content[k].name +' [' + content[k].wins + ']</span>';
 					if (p == 2) {
 						matches[m] = matches[m] + player + '</li>';
 						m++;

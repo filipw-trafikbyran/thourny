@@ -91,6 +91,9 @@ span.deltagare {
 	padding: 0 10px;
 	font-size: 2rem;
 }
+span.deltagare.banned {
+	color: #D1462F;
+}
 .settings {
 	margin: 50px;
 	display: -webkit-flex;
