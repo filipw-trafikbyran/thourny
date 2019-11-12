@@ -20,28 +20,70 @@
 	</script>
 	<script>
 		const database = firebase.database();
-		var randbase = Math.random();
+		var randbase;
 		var increment = 1;
+		var list;
+		var ip;
 
 		$( document ).ready(function() {
+			$.getJSON("https://api.ipify.org/?format=json", function(e) {
+			    ip = e.ip.replace(/\D/g,'');
+			});
 			database.ref('Players/').on('value', function(snapshot) {
-				display(snapshot);
+				list = snapshot.val();
+				randbase = list['order'];
+				delete list['order'];
+				display(list);
 			});
 			$('.matcher').on('click','.deltagare', function(e){
-				increment = parseInt($('.increment').val());
+				newincrement = $('.increment').val();
+				if(newincrement){
+					increment = parseInt(newincrement);
+				}
 				update(e.target);
 			});
 			$('.title').on('click', function(e){
-				location.reload();
+				display(list);
 			});
+			$('.settings').on('input','.user',function (){
+				if($(this).val() == 'nays'){
+					localStorage['thourneyAdmin'] = 'true';
+					setupSetting();
+				}
+				else if($(this).val() == 'logg off'){
+					localStorage['thourneyAdmin'] = 'false';
+					setupSetting();
+				} else if(ip){
+					var target = 'Players/' + ip;
+					var input = $(this).val();
+					database.ref(target).once('value').then(function(snapshot) {
+						console.log(snapshot.val().wins);
+						database.ref(target).update({ 
+							"name" : input,
+							"wins" : snapshot.val().wins
+						});
+					});
+					
+				}
+			})
+			setupSetting();
 		});
 
+		function setupSetting(){
+			$('.settings').html('<input type="text" class="user">');
+			if(localStorage['thourneyAdmin'] == 'true'){
+				$('.settings').append('<input type="number" class="increment" value="1">');
+				$('.settings').append('<button onclick="reshuffle()">randomise</button>');
+			}
+		}
+
+		function reshuffle(){
+			database.ref('Players/order').set(Math.random());
+		}
 		function shuffleArray(array,randomizer) {
-		    for (var i = array.length - 1; i > 0; i--) {
-		        var j = Math.floor(randomizer * (i + 1));
-		        var temp = array[i];
-		        array[i] = array[j];
-		        array[j] = temp;
+		    for (let i = array.length - 1; i > 0; i--) {
+		        const j = Math.floor(randomizer * (i + 1));
+		        [array[i], array[j]] = [array[j], array[i]];
 		    }
 		}
 		
@@ -51,17 +93,15 @@
 			var m = 0;
 			var p = 1;
 
-			var contentObj = content.val(); 
-
-			var keys = Object.keys(contentObj);
+			var keys = Object.keys(content);
 			var len = keys.length;
 
-			shuffleArray(keys,randbase)
+			shuffleArray(keys,randbase);
 			
 			for (var i = 0; i < len; i++) {
 				k = keys[i];
-				// console.log(contentObj[k]);
-				var player = '<span class="deltagare" id="' + k + '" data-wins="' + contentObj[k].wins + '">' + contentObj[k].name +' [' + contentObj[k].wins + ']</span>';
+				// console.log(content[k]);
+				var player = '<span class="deltagare" id="' + k + '" data-wins="' + content[k].wins + '">' + content[k].name +' [' + content[k].wins + ']</span>';
 				if (p == 2) {
 					matches[m] = matches[m] + player + '</li>';
 					m++;
@@ -75,7 +115,7 @@
 
 			// console.log(matches);
 
-			// $.each(contentObj, function(key, value){
+			// $.each(content, function(key, value){
 
 			// 	var player = '<span class="deltagare" id="' + key + '" data-wins="' + value.wins + '">' + value.name +' [' + value.wins + ']</span>';
 			// 	if (p == 2) {
@@ -97,25 +137,23 @@
 			$('.matcher').html()
 		}
 		function update(target){
-			database.ref('Players/' + $(target).attr('id')).update({ 
-				"wins" : $(target).data('wins') + increment
-			});
+			if(localStorage['thourneyAdmin'] == 'true'){
+				database.ref('Players/' + $(target).attr('id')).update({ 
+					"wins" : $(target).data('wins') + increment
+				});
+			}
 		}
 		
 	</script>
 </head>
 <body>
 	<h1 class="title">Thourny</h1>
-	<input type="number" class="increment" value="1">
+	
+	<!--  -->
 	<ul class="matcher">
-		<!-- <li class="match"><span class="deltagare" id="21" data-wins="3">Namn</span> VS <span class="deltagare" id="31" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="22" data-wins="3">Namn</span> VS <span class="deltagare" id="32" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="23" data-wins="3">Namn</span> VS <span class="deltagare" id="33" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="24" data-wins="3">Namn</span> VS <span class="deltagare" id="34" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="25" data-wins="3">Namn</span> VS <span class="deltagare" id="35" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="26" data-wins="3">Namn</span> VS <span class="deltagare" id="36" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="27" data-wins="3">Namn</span> VS <span class="deltagare" id="37" data-wins="3">Namn</span></li>
-		<li class="match"><span class="deltagare" id="28" data-wins="3">Namn</span> VS <span class="deltagare" id="38" data-wins="3">Namn</span></li> -->
 	</ul>
+	<div class="settings">
+		
+	</div>
 </body>
 </html>
