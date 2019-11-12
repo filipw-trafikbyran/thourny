@@ -109,3 +109,11 @@ span.deltagare {
 	-o-flex-wrap: wrap;
 	flex-wrap: wrap;
 }
+.banmode{
+	border-color: #D1462F;
+	color: #D1462F;
+}
+.banmode:hover, .banmode.active{
+	background-color: #D1462F;
+	color: #333;
+}
