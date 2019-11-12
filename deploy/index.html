@@ -36,13 +36,6 @@
 				delete list['order'];
 				display(list);
 			});
-			$('.matcher').on('click','.deltagare', function(e){
-				newincrement = $('.increment').val();
-				if(newincrement){
-					increment = parseInt(newincrement);
-				}
-				update(e.target);
-			});
 			$('.title').on('click', function(e){
 				display(list);
 			});
@@ -92,20 +85,27 @@
 		}
 
 		function banmode(){
-			$('.banmode').addClass('active');
-			$('.increment').val(0);
-			$('.matcher').on('click','.deltagare', function(e){
-				if(!$(e.target).hasClass('banned')){
-					database.ref('Players/' + $(e.target).attr('id')).update({ 
-						"banned" : true
-					});
-				} else {
-					database.ref('Players/' + $(e.target).attr('id')).update({ 
-						"banned" : false
-					});
-				}
-				
-			});
+			if(!$('.banmode').hasClass('active')){
+				$('.banmode').addClass('active');
+				display(list);
+				$('.deltagare').unbind('click', updateCallback);
+				$('.deltagare').bind('click', banplayer);
+			}else {
+				$('.banmode').removeClass('active');
+				display(list);
+			}
+		}
+
+		function banplayer(){
+			if(!$(this).hasClass('banned')){
+				database.ref('Players/' + $(this).attr('id')).update({ 
+					"banned" : true
+				});
+			} else {
+				database.ref('Players/' + $(this).attr('id')).update({ 
+					"banned" : false
+				});
+			}
 		}
 
 		function reshuffle(){
@@ -174,7 +174,21 @@
 				$('.matcher').append(value);
 			});
 			// console.log(matches);
-			$('.matcher').html()
+			$('.matcher').html();
+			if(!$('.banmode').hasClass('active')){
+				$('.deltagare').bind('click', updateCallback);
+			}else {
+				$('.deltagare').bind('click', banplayer);
+			}
+		}
+
+		function updateCallback(){
+			newincrement = $('.increment').val();
+			if(newincrement){
+				increment = parseInt(newincrement);
+			}
+			console.log(this);
+			update(this);
 		}
 		function update(target){
 			if(localStorage['thourneyAdmin'] == 'true'){

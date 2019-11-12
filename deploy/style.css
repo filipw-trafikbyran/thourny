@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css?family=Bungee|Roboto+Slab&display=swap');
 
+::selection {
+  background: transparent; /* WebKit/Blink Browsers */
+}
+::-moz-selection {
+  background: transparent; /* Gecko Browsers */
+}
 body {
 	min-height: 100vh;
 	width: 100vw;
