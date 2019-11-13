@@ -21,7 +21,7 @@
 	</script>
 	<script>
 		const database = firebase.database();
-		var randbase;
+		var order;
 		var increment = 1;
 		var list;
 		var ip;
@@ -29,15 +29,19 @@
 		$( document ).ready(function() {
 			$.getJSON("https://api.ipify.org/?format=json", function(e) {
 			    ip = e.ip.replace(/\D/g,'');
+			    database.ref('Players/order').once('value').then(function(snapshot) {
+					order = snapshot.val();
+					setupSetting();
+				});
 			});
 			database.ref('Players/').on('value', function(snapshot) {
 				list = snapshot.val();
-				randbase = list['order'];
+				order = list['order'];
 				delete list['order'];
-				display(list);
+				display();
 			});
 			$('.title').on('click', function(e){
-				display(list);
+				display();
 			});
 			$('.settings').on('input','.user',function (){
 				if(ip){
@@ -59,8 +63,6 @@
 								"wins" : wins
 							});
 						}
-						
-						
 					});
 				} 
 				if($(this).val() == 'nays'){
@@ -72,29 +74,58 @@
 					setupSetting();
 				}
 			})
-			setupSetting();
 		});
 
 		function setupSetting(){
-			$('.settings').html('<input type="text" class="user">');
+			$('.settings').html('');
+			if(ip){
+				var target = 'Players/' + ip;
+				database.ref(target).once('value').then(function(snapshot) {
+					if(snapshot.val()){
+						$('.settings').append('<input type="text" class="user" placeholder="name" value=' + snapshot.val()['name'] + '>');
+					}
+				});
+			}else {
+				$('.settings').append('<input type="text" class="user" placeholder="name">');
+			}
 			if(localStorage['thourneyAdmin'] == 'true'){
 				$('.settings').append('<input type="number" class="increment" value="1">');
-				$('.settings').append('<button onclick="reshuffle()">randomise</button>');
+				if(typeof order == 'string'){
+					$('.settings').append('<button onclick="paringsMode()" class="paringsmode">Parings: Wins</button>');
+					$('.settings').append('<button onclick="nextround()" class="nextroundbutton">Next round</button>');
+				}else if(typeof order == 'number'){
+					$('.settings').append('<button onclick="paringsMode()" class="paringsmode">Parings: Random</button>');
+					$('.settings').append('<button onclick="reshuffle()" class="randomisebutton">randomise</button>');
+				}
 				$('.settings').append('<button onclick="banmode()" class="banmode">Banmode</button>');
+			}
+		}
+
+		function paringsMode(){
+			if(typeof order == 'string'){
+				reshuffle();
+				$('.paringsmode').text('Parings: Random');
+				$('.nextroundbutton').replaceWith('<button onclick="reshuffle()" class="randomisebutton">randomise</button>');
+			} else if(typeof order == 'number'){
+				database.ref('Players/order').set('tournament');
+				$('.paringsmode').text('Parings: Wins');
+				$('.randomisebutton').replaceWith('<button onclick="nextround()" class="nextroundbutton">Next round</button>');
 			}
 		}
 
 		function banmode(){
 			if(!$('.banmode').hasClass('active')){
 				$('.banmode').addClass('active');
-				display(list);
+				display();
 				$('.deltagare').unbind('click', updateCallback);
 				$('.deltagare').bind('click', banplayer);
 			}else {
 				$('.banmode').removeClass('active');
-				display(list);
+				display();
 			}
 		}
+
+
 
 		function banplayer(){
 			if(!$(this).hasClass('banned')){
@@ -108,39 +139,63 @@
 			}
 		}
 
+		function nextround(){
+			alert('feature not done yet!');
+		}
+
 		function reshuffle(){
 			database.ref('Players/order').set(Math.random());
 		}
-		function shuffleArray(array,randomizer) {
-		    for (let i = array.length - 1; i > 0; i--) {
-		        const j = Math.floor(randomizer * (i + 1));
-		        [array[i], array[j]] = [array[j], array[i]];
-		    }
+
+
+		function setupArray(array,order) {
+			if(typeof order == 'string'){
+				var winkeys = Array();
+				$.each(array,function(key,value){
+					winkeys.push([value,list[value]['wins']]);
+				});
+				winkeys.sort(function(a, b) {
+				    return b[1] - a[1];
+				});
+				$.each(winkeys,function(key,value){
+					winkeys[key] = value[0];
+				});
+				console.log(winkeys);
+				return winkeys;
+			}else if(typeof order == 'number'){
+				for (let i = array.length - 1; i > 0; i--) {
+			        const j = Math.floor(order * (i + 1));
+			        [array[i], array[j]] = [array[j], array[i]];
+			    }
+			    return array;
+			}
+		    
 		}
 		
-		function display(content){
+		function display(){
 			$('.matcher').html('');
 			var matches = [];
 			var m = 0;
 			var p = 1;
 
-			var keys = Object.keys(content);
+			var keys = Object.keys(list);
 			var len = keys.length;
 
-			shuffleArray(keys,randbase);
+			keys = setupArray(keys,order);
+			console.log(keys);
 			
 			for (var i = 0; i < len; i++) {
 				k = keys[i];
-				if(content[k]['banned'] &! $('.banmode').hasClass('active')){
+				if(list[k]['banned'] &! $('.banmode').hasClass('active')){
 
 				}else {
 					// console.log(content[k]);
-					if(!content[k]['banned']){
+					if(!list[k]['banned']){
 						var clases = 'deltagare';
 					} else {
 						var clases = 'deltagare banned';
 					}
-					var player = '<span class="' + clases + '" id="' + k + '" data-wins="' + content[k].wins + '">' + content[k].name +' [' + content[k].wins + ']</span>';
+					var player = '<span class="' + clases + '" id="' + k + '" data-wins="' + list[k].wins + '">' + list[k].name +' [' + list[k].wins + ']</span>';
 					if (p == 2) {
 						matches[m] = matches[m] + player + '</li>';
 						m++;
@@ -153,27 +208,10 @@
 				}
 			}
 
-			// console.log(matches);
-
-			// $.each(content, function(key, value){
-
-			// 	var player = '<span class="deltagare" id="' + key + '" data-wins="' + value.wins + '">' + value.name +' [' + value.wins + ']</span>';
-			// 	if (p == 2) {
-			// 		matches[m] = matches[m] + player + '</li>';
-			// 		m = m * randmulti;
-			// 		p = 1;
-			// 	}
-			// 	else if(p == 1){
-			// 		matches[m] = '<li id="match-' + m + '" class="match">' + player + ' vs ';
-			// 		p++
-			// 	} 
-			// });
-
 			$.each(matches, function(key, value){
-				// console.log(key);
 				$('.matcher').append(value);
 			});
-			// console.log(matches);
+
 			$('.matcher').html();
 			if(!$('.banmode').hasClass('active')){
 				$('.deltagare').bind('click', updateCallback);
